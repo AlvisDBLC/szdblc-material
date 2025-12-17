@@ -13,7 +13,6 @@
       --text:#d8e7ff;
       --muted:#7fa0c6;
       --green:#39ff14;
-      --green2:#1bd64a;
       --danger:#ff4d4d;
     }
     *{box-sizing:border-box}
@@ -37,6 +36,7 @@
       border:1px solid rgba(57,255,20,.35);
       padding:8px 12px;border-radius:10px;
       cursor:pointer;
+      white-space:nowrap;
     }
     .btn:hover{border-color:rgba(57,255,20,.75)}
     .btn.primary{
@@ -44,11 +44,11 @@
       border-color:rgba(57,255,20,.55);
       color:var(--text);
     }
-    .wrap{max-width:1220px;margin:18px auto;padding:0 18px}
+    .wrap{max-width:1320px;margin:18px auto;padding:0 18px}
     .tabs{display:flex;gap:10px;margin-bottom:12px}
     .tab{padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:rgba(0,0,0,.15);cursor:pointer;color:var(--muted)}
     .tab.active{border-color:rgba(57,255,20,.55);color:var(--text);background:rgba(57,255,20,.08)}
-    .grid{display:grid;grid-template-columns: 320px 1fr 360px;gap:12px}
+    .grid{display:grid;grid-template-columns: 340px 1fr 420px;gap:12px}
     .card{
       background: linear-gradient(180deg, rgba(12,30,45,.85), rgba(8,20,32,.85));
       border:1px solid var(--line);
@@ -60,7 +60,7 @@
     .card h2{font-size:13px;margin:0 0 10px 0;color:var(--text)}
     .muted{color:var(--muted);font-size:12px}
     .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-    input, textarea, select{
+    input, textarea{
       width:100%;
       background:rgba(0,0,0,.25);
       border:1px solid var(--line);
@@ -72,18 +72,17 @@
     textarea{min-height:74px;resize:vertical}
     .mini{font-size:12px}
     .tree{
-      max-height:540px;overflow:auto;border-top:1px solid var(--line);padding-top:10px
+      max-height:600px;overflow:auto;border-top:1px solid var(--line);padding-top:10px
     }
     .node{
       padding:8px 10px;border:1px solid transparent;border-radius:10px;
-      display:flex;align-items:center;justify-content:space-between;gap:10px;
+      display:flex;align-items:flex-start;justify-content:space-between;gap:10px;
       cursor:pointer;
     }
     .node:hover{background:rgba(57,255,20,.06)}
     .node.active{border-color:rgba(57,255,20,.55);background:rgba(57,255,20,.08)}
-    .indent{margin-left:18px}
-    .tag{font-size:11px;color:var(--muted)}
-    .tools{display:flex;gap:6px}
+    .tag{font-size:11px;color:var(--muted);margin-top:3px}
+    .tools{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
     .iconBtn{
       border:1px solid var(--line);
       background:rgba(0,0,0,.18);
@@ -92,15 +91,18 @@
       font-size:12px;
     }
     .iconBtn:hover{border-color:rgba(57,255,20,.35);color:var(--text)}
+    .dangerBtn{border-color:rgba(255,77,77,.35);color:#ffb3b3}
     table{width:100%;border-collapse:collapse}
     th,td{border-bottom:1px solid var(--line);padding:8px 8px;font-size:12px;vertical-align:top}
     th{color:var(--muted);font-weight:600}
     .pill{display:inline-block;padding:2px 8px;border-radius:999px;border:1px solid var(--line);color:var(--muted);font-size:11px}
-    .danger{border-color:rgba(255,77,77,.35);color:#ffb3b3}
-    .rightCol{display:flex;flex-direction:column;gap:12px}
     .hint{font-size:12px;color:var(--muted);line-height:1.6}
     .hidden{display:none!important}
     .split{height:1px;background:var(--line);margin:10px 0}
+    .field{margin-top:10px}
+    .label{font-size:12px;color:var(--muted);margin-bottom:6px}
+    .twoCol{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .kbd{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;}
   </style>
 </head>
 <body>
@@ -109,7 +111,7 @@
     <div class="dot"></div>
     <div>
       <h1>物料编码库 & BOM</h1>
-      <div class="sub">Deep Space Gray × Neon Green · 物料编码自动生成（按大类体系连续递增）</div>
+      <div class="sub">深空灰 × 荧光绿 · 支持手动编码 / 自动编码 · 20/11/88/86</div>
     </div>
   </div>
   <div class="row">
@@ -133,7 +135,10 @@
           <button class="btn primary mini" id="btnInitRoots">初始化四个根节点</button>
         </div>
         <div class="split"></div>
-        <div class="muted">提示：只能在叶子节点下创建物料；有子分类或已有物料的分类不能删除。</div>
+        <div class="muted">
+          规则：物料只能挂在<strong>叶子节点</strong>（该分类下没有子分类）。<br/>
+          分类删除限制：有子分类或该分类已有物料 → 不能删除。
+        </div>
         <div class="tree" id="tree"></div>
       </div>
 
@@ -145,14 +150,15 @@
         </div>
         <div class="split"></div>
         <div class="muted" id="selInfo">未选择分类</div>
-        <div style="margin-top:10px; overflow:auto; max-height:460px;">
+
+        <div style="margin-top:10px; overflow:auto; max-height:520px;">
           <table>
             <thead>
               <tr>
-                <th style="width:120px">编码</th>
-                <th>名称</th>
+                <th style="width:140px">编码</th>
+                <th>名称 / 描述</th>
                 <th style="width:90px">状态</th>
-                <th style="width:90px">操作</th>
+                <th style="width:140px">操作</th>
               </tr>
             </thead>
             <tbody id="matTbody"></tbody>
@@ -162,33 +168,51 @@
 
       <div class="card">
         <h2>新建 / 修改物料</h2>
-        <div class="hint">规则：物料编码 = 「所属一级大类 2 位数字」+「.」+「在该子体系内连续递增数字串」。编码生成后不可删除、不可更改。</div>
+
+        <div class="hint">
+          你可以<strong>手动输入编码</strong>，也可留空自动生成。<br/>
+          编码格式必须是：<span class="kbd">两位大类 + "." + 数字串</span>（例如：<span class="kbd">20.35280</span>）。<br/>
+          大类：20 客供 / 11 自购 / 88 成品 / 86 半成品。
+        </div>
+
         <div class="split"></div>
-        <label class="muted">当前选择分类</label>
-        <div class="row">
+
+        <div class="field">
+          <div class="label">当前选择分类</div>
           <input id="matCategory" disabled />
         </div>
-        <div style="height:8px"></div>
-        <label class="muted">物料名称 *</label>
-        <input id="matName" />
-        <div style="height:8px"></div>
-        <label class="muted">描述</label>
-        <textarea id="matDesc"></textarea>
-        <div style="height:8px"></div>
-        <div class="row">
-          <button class="btn primary" id="btnCreateMat">生成编码并创建</button>
+
+        <div class="field">
+          <div class="label">物料编码（可选，自定义；留空自动生成）</div>
+          <input id="matCode" placeholder="例如 20.35280（留空则自动生成）" />
+        </div>
+
+        <div class="field">
+          <div class="label">物料名称 *</div>
+          <input id="matName" />
+        </div>
+
+        <div class="field">
+          <div class="label">描述</div>
+          <textarea id="matDesc"></textarea>
+        </div>
+
+        <div class="row" style="margin-top:10px">
+          <button class="btn primary" id="btnCreateMat">创建（生成/使用编码）</button>
           <button class="btn" id="btnClearMat">清空</button>
         </div>
 
         <div class="split"></div>
+
         <div class="muted">分类操作</div>
         <div class="row" style="margin-top:8px">
           <button class="btn" id="btnAddChild">新增子分类</button>
           <button class="btn" id="btnRename">重命名</button>
-          <button class="btn" id="btnDeleteCat" style="border-color:rgba(255,77,77,.35)">删除分类</button>
+          <button class="btn dangerBtn" id="btnDeleteCat">删除分类</button>
         </div>
+
         <div class="hint" style="margin-top:8px">
-          * 根节点不可删除/重命名（可新增子分类，保持 20/11/88/86 大类体系稳定）
+          * 根节点不可删除/重命名，但<strong>可以新增子分类</strong>。
         </div>
       </div>
     </div>
@@ -203,8 +227,7 @@
           <input id="bomName" placeholder="BOM 名称（例如：VB01.00.001 BOM）" />
           <button class="btn primary" id="btnCreateBom">新建</button>
         </div>
-        <div style="height:8px"></div>
-        <textarea id="bomDesc" placeholder="描述（可选）"></textarea>
+
         <div class="split"></div>
         <div id="bomList"></div>
       </div>
@@ -217,11 +240,12 @@
           <input id="bomSearch" placeholder="搜索物料（名称/编码/描述）" />
           <button class="btn primary" id="btnBomSearch">搜索</button>
         </div>
-        <div style="margin-top:10px; overflow:auto; max-height:470px;">
+
+        <div style="margin-top:10px; overflow:auto; max-height:520px;">
           <table>
             <thead>
               <tr>
-                <th style="width:120px">编码</th>
+                <th style="width:140px">编码</th>
                 <th>名称</th>
                 <th style="width:90px">操作</th>
               </tr>
@@ -232,21 +256,22 @@
       </div>
 
       <div class="card">
-        <h2>BOM 明细（可手填扩展字段）</h2>
-        <div class="hint">同一物料可出现在多个 BOM。下方字段全部非必填，均为手填。</div>
+        <h2>BOM 明细（全部手填、非必填）</h2>
+        <div class="hint">同一物料可出现在多个 BOM。字段：材料/类别/数量/重量/备注，均为手填、非必填。</div>
         <div class="split"></div>
-        <div style="overflow:auto; max-height:520px;">
+
+        <div style="overflow:auto; max-height:560px;">
           <table>
             <thead>
               <tr>
-                <th style="width:110px">编码</th>
-                <th style="width:140px">名称</th>
+                <th style="width:140px">编码</th>
+                <th style="width:170px">名称</th>
                 <th style="width:120px">材料</th>
                 <th style="width:120px">类别</th>
                 <th style="width:90px">数量</th>
                 <th style="width:90px">重量</th>
-                <th style="width:160px">备注</th>
-                <th style="width:80px">操作</th>
+                <th style="width:170px">备注</th>
+                <th style="width:90px">操作</th>
               </tr>
             </thead>
             <tbody id="bomItemsTbody"></tbody>
@@ -258,6 +283,7 @@
 </div>
 
 <script>
+  // ===== 配置：你的 API 域名 =====
   const API = "https://material-api.szdblc.cn";
 
   async function api(path, opt={}) {
@@ -268,7 +294,11 @@
     });
     const ct = r.headers.get("content-type") || "";
     const data = ct.includes("application/json") ? await r.json() : await r.text();
-    if (!r.ok) throw new Error((data && data.message) ? data.message : JSON.stringify(data));
+    if (!r.ok) {
+      // 让报错更直观
+      const msg = (data && data.error) ? data.error : (data && data.message) ? data.message : JSON.stringify(data);
+      throw new Error(msg);
+    }
     return data;
   }
 
@@ -280,6 +310,15 @@
     selectedBomId: null,
     boms: [],
   };
+
+  function escapeHtml(s){
+    return String(s||"")
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;")
+      .replaceAll("'","&#039;");
+  }
 
   function buildChildrenMap() {
     state.childrenMap = new Map();
@@ -307,30 +346,27 @@
     row.style.marginLeft = (level*14) + "px";
 
     const left = document.createElement("div");
-    left.innerHTML = `<div>${escapeHtml(node.name)}</div><div class="tag">${node.parent_id ? "子分类" : "根节点"}</div>`;
+    left.innerHTML = `<div>${escapeHtml(node.name)}</div>
+                      <div class="tag">${node.parent_id ? "子分类" : "根节点"}</div>`;
     row.appendChild(left);
 
     const tools = document.createElement("div");
     tools.className = "tools";
-    const btn = document.createElement("button");
-    btn.className = "iconBtn";
-    btn.textContent = "选";
-    btn.onclick = (e)=>{ e.stopPropagation(); selectCategory(node.id); };
-    tools.appendChild(btn);
+
+    const btnSel = document.createElement("button");
+    btnSel.className = "iconBtn";
+    btnSel.textContent = "选择";
+    btnSel.onclick = (e)=>{ e.stopPropagation(); selectCategory(node.id); };
+    tools.appendChild(btnSel);
+
     row.appendChild(tools);
 
     row.onclick = ()=>selectCategory(node.id);
     wrap.appendChild(row);
 
     const kids = state.childrenMap.get(node.id) || [];
-    if (kids.length) {
-      kids.forEach(k => wrap.appendChild(renderNode(k, level+1)));
-    }
+    kids.forEach(k => wrap.appendChild(renderNode(k, level+1)));
     return wrap;
-  }
-
-  function escapeHtml(s){
-    return String(s||"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;");
   }
 
   async function loadCategories() {
@@ -368,6 +404,7 @@
     const rows = await api("/materials" + (qs.toString()?`?${qs}`:""));
     const tbody = document.getElementById("matTbody");
     tbody.innerHTML = "";
+
     rows.forEach(r=>{
       const tr = document.createElement("tr");
       tr.innerHTML = `
@@ -376,70 +413,74 @@
           <div>${escapeHtml(r.name)}</div>
           <div class="muted">${escapeHtml(r.description||"")}</div>
         </td>
-        <td>${escapeHtml(r.status||"")}</td>
-        <td><button class="iconBtn" data-id="${r.id}">编辑</button></td>
+        <td>${escapeHtml(r.status||"active")}</td>
+        <td>
+          <button class="iconBtn" data-id="${r.id}">编辑</button>
+          <button class="iconBtn dangerBtn" data-del="${r.id}">删除</button>
+        </td>
       `;
-      tr.querySelector("button").onclick = ()=>editMaterial(r);
+
+      tr.querySelector('button[data-id]').onclick = ()=>editMaterial(r);
+      tr.querySelector('button[data-del]').onclick = ()=>deleteMaterial(r);
+
       tbody.appendChild(tr);
     });
   }
 
   function editMaterial(m) {
+    document.getElementById("matCode").value = m.code || "";
     document.getElementById("matName").value = m.name || "";
     document.getElementById("matDesc").value = m.description || "";
-    document.getElementById("btnCreateMat").textContent = "保存修改（不改编码）";
-    document.getElementById("btnCreateMat").dataset.editId = m.id;
+
+    // 这里我们不做“编辑保存”（避免你误把 code 当可改），编辑用于快速复制查看
+    // 如果你后续要编辑 name/desc/status，也可以加 PATCH 接口再做
+    alert("已填充到右侧表单（编码仅供查看/复制；新建物料时可手动输入编码）");
   }
 
   function clearMatForm() {
+    document.getElementById("matCode").value = "";
     document.getElementById("matName").value = "";
     document.getElementById("matDesc").value = "";
-    document.getElementById("btnCreateMat").textContent = "生成编码并创建";
-    delete document.getElementById("btnCreateMat").dataset.editId;
   }
 
-  async function createOrUpdateMaterial() {
+  async function createMaterial() {
     const cat = state.selectedCatId;
+    const code = document.getElementById("matCode").value.trim();
     const name = document.getElementById("matName").value.trim();
     const description = document.getElementById("matDesc").value;
 
+    if (!cat) return alert("请先选择分类（且必须为叶子节点才能创建物料）");
     if (!name) return alert("物料名称必填");
-    if (!cat) return alert("请先选择分类（且必须为叶子节点）");
 
-    const editId = document.getElementById("btnCreateMat").dataset.editId;
-    if (editId) {
-      await api("/materials/" + editId, { method:"PATCH", body: JSON.stringify({ name, description }) });
-      clearMatForm();
-      await loadMaterials();
-      alert("已保存");
-      return;
-    }
+    const payload = { category_id: cat, name, description };
+    if (code) payload.code = code;
 
-    const r = await api("/materials", { method:"POST", body: JSON.stringify({ category_id: cat, name, description }) });
+    const r = await api("/materials", { method:"POST", body: JSON.stringify(payload) });
     clearMatForm();
     await loadMaterials();
     alert("创建成功，编码：" + r.code);
   }
 
+  async function deleteMaterial(m) {
+    if (!confirm(`确定删除该物料吗？\n\n${m.code}  ${m.name}\n\n删除后会自动从所有 BOM 中移除。`)) return;
+    await api(`/materials/${m.id}`, { method:"DELETE" });
+    await loadMaterials();
+    alert("已删除");
+  }
+
   async function addChildCategory() {
-  if (!state.selectedCat) return alert("先选择一个分类");
+    if (!state.selectedCat) return alert("先选择一个分类（可选根节点/任意节点）");
+    const name = prompt("请输入子分类名称：");
+    if (!name) return;
 
-  // ✅ 允许在根节点/任意节点下新增子分类
-  const name = prompt("请输入子分类名称：");
-  if (!name) return;
-
-  await api("/categories", {
-    method: "POST",
-    body: JSON.stringify({ parent_id: state.selectedCatId, name })
-  });
-
-  await loadCategories();
-}
-
+    await api("/categories", { method:"POST", body: JSON.stringify({ parent_id: state.selectedCatId, name }) });
+    await loadCategories();
+  }
 
   async function renameCategory() {
     if (!state.selectedCat) return alert("先选择一个分类");
-    if (!state.selectedCat.parent_id) return alert("根节点不允许重命名");
+    const isRoot = !state.selectedCat.parent_id; // 根节点
+    if (isRoot) return alert("根节点不允许重命名");
 
     const name = prompt("请输入新名称：", state.selectedCat.name);
     if (!name) return;
@@ -450,7 +491,8 @@
 
   async function deleteCategory() {
     if (!state.selectedCat) return alert("先选择一个分类");
-    if (!state.selectedCat.parent_id) return alert("根节点不允许删除");
+    const isRoot = !state.selectedCat.parent_id;
+    if (isRoot) return alert("根节点不允许删除");
 
     if (!confirm("确认删除该分类？（有子分类或已有物料会禁止删除）")) return;
 
@@ -459,7 +501,7 @@
     state.selectedCat = null;
     await loadCategories();
     await loadMaterials();
-    alert("已删除");
+    alert("已删除分类");
   }
 
   /* ===== BOM ===== */
@@ -468,11 +510,17 @@
     state.boms = await api("/boms");
     const el = document.getElementById("bomList");
     el.innerHTML = "";
+
     state.boms.forEach(b=>{
       const div = document.createElement("div");
       div.className = "node" + (state.selectedBomId===b.id ? " active":"");
-      div.innerHTML = `<div><div>${escapeHtml(b.name)}</div><div class="muted">${escapeHtml(b.description||"")}</div></div>
-                       <div class="tools"><button class="iconBtn">选</button></div>`;
+      div.innerHTML = `
+        <div>
+          <div>${escapeHtml(b.name)}</div>
+          <div class="tag">${escapeHtml(b.created_at||"")}</div>
+        </div>
+        <div class="tools"><button class="iconBtn">选择</button></div>
+      `;
       div.querySelector("button").onclick = ()=>selectBom(b.id);
       div.onclick = ()=>selectBom(b.id);
       el.appendChild(div);
@@ -481,11 +529,10 @@
 
   async function createBom() {
     const name = document.getElementById("bomName").value.trim();
-    const description = document.getElementById("bomDesc").value;
     if (!name) return alert("BOM 名称必填");
-    const r = await api("/boms", { method:"POST", body: JSON.stringify({ name, description }) });
+
+    const r = await api("/boms", { method:"POST", body: JSON.stringify({ name }) });
     document.getElementById("bomName").value = "";
-    document.getElementById("bomDesc").value = "";
     await loadBoms();
     await selectBom(r.id);
   }
@@ -501,27 +548,27 @@
   }
 
   async function loadBomItems() {
-    if (!state.selectedBomId) {
-      document.getElementById("bomItemsTbody").innerHTML = "";
-      return;
-    }
-    const data = await api("/boms/" + state.selectedBomId);
     const tbody = document.getElementById("bomItemsTbody");
     tbody.innerHTML = "";
+    if (!state.selectedBomId) return;
 
-    (data.items||[]).forEach(it=>{
+    // 你的 Worker 版本可能提供的是 /boms/:id/items（POST/GET）
+    // 这里用 GET /boms/:id/items
+    const items = await api(`/boms/${state.selectedBomId}/items`);
+
+    items.forEach(it=>{
       const tr = document.createElement("tr");
       tr.innerHTML = `
-        <td><span class="pill">${escapeHtml(it.part_code)}</span></td>
-        <td>${escapeHtml(it.part_name||"")}</td>
-        <td><input value="${escapeHtml(it.material||"")}" /></td>
-        <td><input value="${escapeHtml(it.category||"")}" /></td>
-        <td><input value="${escapeHtml(it.qty||"")}" /></td>
-        <td><input value="${escapeHtml(it.weight||"")}" /></td>
-        <td><input value="${escapeHtml(it.remark||"")}" /></td>
+        <td><span class="pill">${escapeHtml(it.code || "")}</span></td>
+        <td>${escapeHtml(it.name || "")}</td>
+        <td><input value="${escapeHtml(it.mat || "")}" /></td>
+        <td><input value="${escapeHtml(it.type || "")}" /></td>
+        <td><input value="${escapeHtml(it.qty || "")}" /></td>
+        <td><input value="${escapeHtml(it.weight || "")}" /></td>
+        <td><input value="${escapeHtml(it.remark || "")}" /></td>
         <td>
           <button class="iconBtn">保存</button>
-          <button class="iconBtn danger" style="margin-top:6px">移除</button>
+          <button class="iconBtn dangerBtn" style="margin-top:6px">移除</button>
         </td>
       `;
       const inputs = tr.querySelectorAll("input");
@@ -530,11 +577,11 @@
 
       btnSave.onclick = async ()=>{
         await api(`/boms/${state.selectedBomId}/items`, {
-          method:"PUT",
+          method:"POST",
           body: JSON.stringify({
             material_id: it.material_id,
-            material: inputs[0].value,
-            category: inputs[1].value,
+            mat: inputs[0].value,
+            type: inputs[1].value,
             qty: inputs[2].value,
             weight: inputs[3].value,
             remark: inputs[4].value
@@ -557,6 +604,7 @@
     const q = document.getElementById("bomSearch").value.trim();
     if (!q) return alert("请输入搜索关键字");
     const rows = await api("/materials?q=" + encodeURIComponent(q));
+
     const tbody = document.getElementById("bomSearchTbody");
     tbody.innerHTML = "";
     rows.forEach(r=>{
@@ -569,7 +617,7 @@
       tr.querySelector("button").onclick = async ()=>{
         if (!state.selectedBomId) return alert("先选择一个 BOM");
         await api(`/boms/${state.selectedBomId}/items`, {
-          method:"PUT",
+          method:"POST",
           body: JSON.stringify({ material_id: r.id })
         });
         await loadBomItems();
@@ -598,7 +646,7 @@
   };
   document.getElementById("btnInitRoots").onclick = initRoots;
   document.getElementById("btnSearch").onclick = loadMaterials;
-  document.getElementById("btnCreateMat").onclick = createOrUpdateMaterial;
+  document.getElementById("btnCreateMat").onclick = createMaterial;
   document.getElementById("btnClearMat").onclick = clearMatForm;
 
   document.getElementById("btnAddChild").onclick = addChildCategory;
@@ -610,11 +658,15 @@
 
   // 首次加载
   (async ()=>{
-    await loadCategories();
-    await loadMaterials();
-    await loadBoms();
+    try{
+      await loadCategories();
+      await loadMaterials();
+      await loadBoms();
+    }catch(e){
+      alert("加载失败：" + e.message + "\n\n请确认：material-api 已部署且已登录 szdblc.cn");
+      console.error(e);
+    }
   })();
 </script>
 </body>
 </html>
-
