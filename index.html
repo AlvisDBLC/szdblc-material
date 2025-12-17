@@ -188,7 +188,7 @@
           <button class="btn" id="btnDeleteCat" style="border-color:rgba(255,77,77,.35)">删除分类</button>
         </div>
         <div class="hint" style="margin-top:8px">
-          * 根节点不可新增/删除/重命名（保持 20/11/88/86 大类体系稳定）
+          * 根节点不可删除/重命名（可新增子分类，保持 20/11/88/86 大类体系稳定）
         </div>
       </div>
     </div>
@@ -422,15 +422,20 @@
   }
 
   async function addChildCategory() {
-    if (!state.selectedCat) return alert("先选择一个分类");
-    if (!state.selectedCat.parent_id) return alert("根节点下才允许新增子分类，请先选中某个根节点或其子分类再新增。");
+  if (!state.selectedCat) return alert("先选择一个分类");
 
-    const name = prompt("请输入子分类名称：");
-    if (!name) return;
+  // ✅ 允许在根节点/任意节点下新增子分类
+  const name = prompt("请输入子分类名称：");
+  if (!name) return;
 
-    await api("/categories", { method:"POST", body: JSON.stringify({ parent_id: state.selectedCatId, name }) });
-    await loadCategories();
-  }
+  await api("/categories", {
+    method: "POST",
+    body: JSON.stringify({ parent_id: state.selectedCatId, name })
+  });
+
+  await loadCategories();
+}
+
 
   async function renameCategory() {
     if (!state.selectedCat) return alert("先选择一个分类");
